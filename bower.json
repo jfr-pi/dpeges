@@ -1,11 +1,11 @@
 {
   "name": "dpeges",
-  "description": "Create an SVG graphic for DPE and GES diagnostics.",
+  "description": "Create an SVG graphic for DPE and GES diagnostics, included Empty graphic",
   "main": "dpeges.js",
-  "version": "0.0.4",
-  "homepage": "https://github.com/Pascalz/dpeges",
+  "version": "0.0.5",
+  "homepage": "https://github.com/jfr-pi/dpeges",
   "authors": [
-    "Pascalz <pascal@pascalz.com> (http://www.pascalz.com)"
+    "JFR Presta-Informatique <contact@jfr-pi.fr> (https://jfr-presta-informatique.fr)"
   ],
   "keywords": [
     "DPE",

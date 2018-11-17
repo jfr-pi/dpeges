@@ -53,7 +53,7 @@ $ bower install dpeges
 Option name   | Description                                                     | Required | Default value
 ------------- | --------------------------------------------------------------- | -------- | -------------
 domId         | The id of the element that will contain the generated SVG image | Yes      |  
-value         | The DPE or GES actual value, can be an integer or just a letter | No       | 200 
+value         | The DPE or GES actual value, can be an integer or just a letter. the value -1 display an empty graph | No       | 200 
 width         | The width of the generated SVG image                            | No       | 250 
 height        | The height of the generated SVG image                           | No       | 200 
 shadow        | Add shadow to the image                                         | No       | false 
@@ -61,4 +61,10 @@ lang          | The language to use (currently supported: 'fr' and 'en')        
 
 ## Demo
 
-http://pascalz.github.io/dpeges/
+## Information
+forked by JFR Presta-Informatique (Jean FRIRY)
+
+If the DPE and GES are not evaluated, you can dislay an empty graphic by using the value -1. In that case, the graphic will be cover with a the text : 
+DPE Vierge consommations non exploitables
+
+include the graphic for Frigo (added by the original creator)

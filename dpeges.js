@@ -1,11 +1,11 @@
 var DpeGes = function () {
 
-  "use strict";
+    "use strict";
 
     function Diag(options) {
 
       var self = this;
-        
+
       // Default options is DPE
       var defaultOptions = {
         width: 250,
@@ -37,7 +37,7 @@ var DpeGes = function () {
 
       self.header = options.header || defaultOptions.header;
       self.footer = options.footer || defaultOptions.footer;
-         
+
       //self.options = options;
       self.lang = options.lang || defaultOptions.lang;
       self.pad = options.pad || defaultOptions.pad;
@@ -48,7 +48,7 @@ var DpeGes = function () {
       var svgNS = "http://www.w3.org/2000/svg";
 
       self.container = document.getElementById(self.domId);
-        
+
       // Empty container
       while (self.container.firstChild) {
         self.container.removeChild(self.container.firstChild);
@@ -73,13 +73,17 @@ var DpeGes = function () {
             toTxt = " to ";
             break;
         }
-        options.valuesRange.forEach(function (value) {
+        options.valuesRange.forEach(function(value) {
+          if (options.showIntervals === true) {
           if (value.min === null && value.max !== null) {
             self.values.push("≤ " + value.max);
           } else if (value.min !== null && value.max !== null) {
             self.values.push(value.min + toTxt + value.max);
           } else if (value.min !== null && value.max === null) {
             self.values.push("> " + (value.min - 1));
+          }
+          } else {
+            self.values.push("");
           }
           self.colors.push(value.color);
           self.textColors.push(value.textColor);
@@ -113,7 +117,7 @@ var DpeGes = function () {
         } catch (e) {
           //
         }
-      };      
+      };
 
       self.setAttributes = function (elem, o) {
         if (o.fill) {
@@ -159,7 +163,7 @@ var DpeGes = function () {
         return elem;
       };
 
-      self.getText = function (text) {
+      self.getText = function(text) {
         var elem = document.createElementNS(svgNS, "text");
         elem.setAttribute("x", text.x);
         elem.setAttribute("y", text.y);
@@ -168,8 +172,30 @@ var DpeGes = function () {
         return elem;
       };
 
-      self.createSVG = function () {
-        self.getScore();
+      // Texts for empty DPE
+      self.getEmptyDPE = function(text) {
+        var elem = document.createElementNS(svgNS, "text");
+        elem.setAttribute("x", text.x);
+        elem.setAttribute("y", text.y);
+        elem.setAttribute("text-anchor", "middle");
+        elem.setAttribute("transform", "rotate(-45 " + self.width/2 + "," + self.height/2 + ")");
+        elem.textContent = text.text;
+        self.setAttributes(elem, text.options);
+        return elem;
+      };
+
+      self.getEmptyDPEMask = function() {
+        var elem = document.createElementNS(svgNS, "rect");
+        elem.setAttribute("style", "fill-opacity: 0.5;fill:white;");
+        elem.setAttribute("x", "0");
+        elem.setAttribute("y", "0");
+        elem.setAttribute("width", self.width);
+        elem.setAttribute("height", self.height);
+        return elem;
+      };
+
+      self.createSVG = function() {
+        if (self.value !== -1) { self.getScore(); }
         self.getValuesDatas();
 
         var svg = document.createElementNS(svgNS, "svg");
@@ -181,7 +207,7 @@ var DpeGes = function () {
         svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
         var desc = document.createElementNS(svgNS, "desc");
-        desc.textContent = 'Created by Pascalz (http://pascalz.github.io/dpeges/)';
+        desc.textContent = 'Created by Pascalz (http://pascalz.github.io/dpeges/) and forked by JFR Presta-Informatique';
         svg.appendChild(desc);
         var defs = document.createElementNS(svgNS, "defs");
         var filter = document.createElementNS(svgNS, "filter");
@@ -208,7 +234,7 @@ var DpeGes = function () {
         filter.appendChild(feMerge);
         defs.appendChild(filter);
         svg.appendChild(defs);
-        
+
         var countElem = self.values.length;
 
         var blocHeight = (self.height - ((countElem + 1) * self.pad)) / countElem;
@@ -266,9 +292,8 @@ var DpeGes = function () {
                 'fill': "#ffffff",
                 'fillOpacity': 0.8
               }));
-
-            svg.appendChild(self.getText(
-              {
+            if (options.showIntervals == true) {
+              svg.appendChild(self.getText({
                 x: sx2 - 5,
                 y: y + blocHeight * 0.9,
                 text: self.value,
@@ -279,8 +304,21 @@ var DpeGes = function () {
                   'fontFamily': "'Arial Narrow', sans-serif",
                   'textAnchor': 'end'
                 }
-              }
-              ));
+              }));
+            } else {
+              svg.appendChild(self.getText({
+                x: sx2 - 5,
+                y: y + blocHeight * 0.9,
+                text: "←",
+                options: {
+                  'fill': '#000000',
+                  'fontSize': blocHeight * 1.5,
+                  'fontWeight': 'bold',
+                  'fontFamily': "'Arial Narrow', sans-serif",
+                  'textAnchor': 'end'
+                }
+              }));
+            }
           }
 
           svg.appendChild(self.getPolygon(poly, self.colors[i]));
@@ -314,6 +352,37 @@ var DpeGes = function () {
             }));
         }
 
+        if (self.value === -1) {
+          svg.appendChild(self.getEmptyDPEMask());
+
+          var name = self.domId.substring(0,3);
+          if (name === "dpe" || name === "ges") {
+            svg.appendChild(self.getEmptyDPE({
+              x: self.width/2,
+              y: self.height/2 - blocHeight,
+              text: name.toUpperCase() + " Vierge",
+              options: {
+                'fill': '#000000',
+                'fontSize': blocHeight * 0.9,
+                'fontWeight': 'bold',
+                'fontFamily': "'Arial Narrow', sans-serif",
+              }
+            }));
+          }
+
+          svg.appendChild(self.getEmptyDPE({
+            x: self.width/2,
+            y: self.height/2,
+            text: "consommations non exploitables",
+            options: {
+              'fill': '#000000',
+              'fontSize': blocHeight * 0.9,
+              'fontWeight': 'bold',
+              'fontFamily': "'Arial Narrow', sans-serif",
+            }
+          }));
+        }
+
         self.container.appendChild(svg);
       };
 
@@ -323,16 +392,59 @@ var DpeGes = function () {
     function DPE(options) {
 
       options.valuesRange = [
-        { min: null, max: 50, color: '#319834', textColor: '#000000', label: 'A' },
-        { min: 51, max: 90, color: '#33cc31', textColor: '#000000', label: 'B' },
-        { min: 91, max: 150, color: '#cbfc34', textColor: '#000000', label: 'C' },
-        { min: 151, max: 230, color: '#fbfe06', textColor: '#000000', label: 'D' },
-        { min: 231, max: 330, color: '#fbcc05', textColor: '#000000', label: 'E' },
-        { min: 331, max: 450, color: '#fc9935', textColor: '#000000', label: 'F' },
-        { min: 451, max: null, color: '#fc0205', textColor: '#ffffff', label: 'G' }
+        {
+          min: null,
+          max: 50,
+          color: '#319834',
+          textColor: '#000000',
+          label: 'A'
+        },
+        {
+          min: 51,
+          max: 90,
+          color: '#33cc31',
+          textColor: '#000000',
+          label: 'B'
+        },
+        {
+          min: 91,
+          max: 150,
+          color: '#cbfc34',
+          textColor: '#000000',
+          label: 'C'
+        },
+        {
+          min: 151,
+          max: 230,
+          color: '#fbfe06',
+          textColor: '#000000',
+          label: 'D'
+        },
+        {
+          min: 231,
+          max: 330,
+          color: '#fbcc05',
+          textColor: '#000000',
+          label: 'E'
+        },
+        {
+          min: 331,
+          max: 450,
+          color: '#fc9935',
+          textColor: '#000000',
+          label: 'F'
+        },
+        {
+          min: 451,
+          max: null,
+          color: '#fc0205',
+          textColor: '#ffffff',
+          label: 'G'
+        }
       ];
 
       options.shape = "sharp";
+      options.showIntervals = true;
 
       return new Diag(options);
     };
@@ -340,23 +452,126 @@ var DpeGes = function () {
     function GES(options) {
 
       options.valuesRange = [
-        { min: null, max: 5, color: '#f2eff4', textColor: '#000000', label: 'A' },
-        { min: 6, max: 10, color: '#dfc1f7', textColor: '#000000', label: 'B' },
-        { min: 11, max: 20, color: '#d6aaf4', textColor: '#000000', label: 'C' },
-        { min: 21, max: 35, color: '#cc93f4', textColor: '#000000', label: 'D' },
-        { min: 36, max: 55, color: '#bb72f3', textColor: '#ffffff', label: 'E' },
-        { min: 56, max: 80, color: '#a94cee', textColor: '#ffffff', label: 'F' },
-        { min: 81, max: null, color: '#8b1ae1', textColor: '#ffffff', label: 'G' }
+        {
+          min: null,
+          max: 5,
+          color: '#f2eff4',
+          textColor: '#000000',
+          label: 'A'
+        },
+        {
+          min: 6,
+          max: 10,
+          color: '#dfc1f7',
+          textColor: '#000000',
+          label: 'B'
+        },
+        {
+          min: 11,
+          max: 20,
+          color: '#d6aaf4',
+          textColor: '#000000',
+          label: 'C'
+        },
+        {
+          min: 21,
+          max: 35,
+          color: '#cc93f4',
+          textColor: '#000000',
+          label: 'D'
+        },
+        {
+          min: 36,
+          max: 55,
+          color: '#bb72f3',
+          textColor: '#ffffff',
+          label: 'E'
+        },
+        {
+          min: 56,
+          max: 80,
+          color: '#a94cee',
+          textColor: '#ffffff',
+          label: 'F'
+        },
+        {
+          min: 81,
+          max: null,
+          color: '#8b1ae1',
+          textColor: '#ffffff',
+          label: 'G'
+        }
       ];
 
       options.shape = "flat";
+      options.showIntervals = true;
 
       return new Diag(options);
     };
-    
+
+    function FRIGO(options) {
+      options.valuesRange = [
+        {
+          min: null,
+          max: 14,
+          color: '#319834',
+          textColor: '#ffffff',
+          label: 'A+++'
+        },
+        {
+          min: 15,
+          max: 29,
+          color: '#33cc31',
+          textColor: '#ffffff',
+          label: 'A++'
+        },
+        {
+          min: 30,
+          max: 41,
+          color: '#cbfc34',
+          textColor: '#ffffff',
+          label: 'A+'
+        },
+        {
+          min: 42,
+          max: 54,
+          color: '#fbfe06',
+          textColor: '#ffffff',
+          label: 'A'
+        },
+        {
+          min: 55,
+          max: 74,
+          color: '#fbcc05',
+          textColor: '#ffffff',
+          label: 'B'
+        },
+        {
+          min: 75,
+          max: 90,
+          color: '#fc9935',
+          textColor: '#ffffff',
+          label: 'C'
+        },
+        {
+          min: 91,
+          max: null,
+          color: '#fc0205',
+          textColor: '#ffffff',
+          label: 'D'
+        }
+      ];
+
+      options.shape = "sharp";
+      options.showIntervals = false;
+
+      return new Diag(options);
+    };
+
     return {
       dpe: DPE,
-      ges: GES
+      ges: GES,
+      frigo: FRIGO
     };
 
 };
